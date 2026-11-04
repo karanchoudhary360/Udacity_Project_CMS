@@ -91,8 +91,7 @@ def authorized():
 
     code = request.args.get("code")
     if code:
-        cache = _load_cache()
-        result = _build_msal_app(cache=cache).acquire_token_by_authorization_code(
+        result = _build_msal_app().acquire_token_by_authorization_code(
             code,
             scopes=Config.SCOPE,
             redirect_uri=url_for("authorized", _external=True, _scheme="https"),
@@ -105,7 +104,7 @@ def authorized():
             return render_template("auth_error.html", result=result)
 
         claims = result.get("id_token_claims", {})
-        session["user"] = claims
+        session["user"] = claims.get("preferred_username") or claims.get("name") or "unknown"
         user = User.query.filter_by(username="admin").first()
         if user is None:
             app.logger.error("Microsoft login succeeded but local admin user was not found")
@@ -113,11 +112,7 @@ def authorized():
             return redirect(url_for("login"))
 
         login_user(user)
-        _save_cache(cache)
-        app.logger.info(
-            "Microsoft login successful for account=%s",
-            claims.get("preferred_username") or claims.get("name") or "unknown",
-        )
+        app.logger.info("Microsoft login successful for account=%s", session["user"])
 
     return redirect(url_for("home"))
 
@@ -137,18 +132,6 @@ def logout():
         )
     session.clear()
     return redirect(url_for("login"))
-
-
-def _load_cache():
-    cache = msal.SerializableTokenCache()
-    if session.get("token_cache"):
-        cache.deserialize(session["token_cache"])
-    return cache
-
-
-def _save_cache(cache):
-    if cache.has_state_changed:
-        session["token_cache"] = cache.serialize()
 
 
 def _build_msal_app(cache=None, authority=None):
