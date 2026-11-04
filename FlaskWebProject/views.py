@@ -142,7 +142,6 @@ def _build_msal_app(cache=None, authority=None):
         token_cache=cache,
     )
 
-
 def _build_auth_url(authority=None, scopes=None, state=None):
     return _build_msal_app(authority=authority).get_authorization_request_url(
         scopes or Config.SCOPE,
