@@ -14,7 +14,7 @@ app.logger.setLevel(logging.INFO)
 if not app.logger.handlers:
     _handler = logging.StreamHandler()
     _handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s in %(module)s: %(message)s"))
-    app.logger.addHandler(_handler)Session(app)
+    app.logger.addHandler(_handler)
 db = SQLAlchemy(app)
 login = LoginManager(app)
 login.login_view = 'login'
